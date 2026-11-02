@@ -1,0 +1,6 @@
+<% /* c = client row, size = css class */ %>
+<% if (c.logo_file) { %>
+  <img class="avatar <%= typeof size !== 'undefined' ? size : '' %>" src="/logo/<%= c.id %>?v=<%= c.logo_file %>" alt="<%= c.company_name %> logo">
+<% } else { %>
+  <span class="avatar avatar-fallback <%= typeof size !== 'undefined' ? size : '' %>" aria-hidden="true"><%= (c.company_name || '?').trim().charAt(0).toUpperCase() %></span>
+<% } %>

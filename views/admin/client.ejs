@@ -1,0 +1,226 @@
+<%- include('../partials/admin-top') %>
+<%
+  const c = client;
+  const pct = c.plan_views ? Math.min(100, Math.round(c.total_views / c.plan_views * 100)) : 0;
+  const statusLabel = { pending: 'Pending', approved: 'Approved', denied: 'Denied' };
+%>
+<a class="back" href="/admin">&larr; Overview</a>
+<section class="workspace-head card">
+  <div class="workspace-id">
+    <%- include('../partials/client-logo', { c, size: 'avatar-lg' }) %>
+    <div>
+      <h1><%= c.company_name %></h1>
+      <p class="muted">
+        @<%= c.username %>
+        <span class="badge <%= c.active ? 'badge-approved' : 'badge-muted' %>"><%= c.active ? 'Active' : 'Inactive' %></span>
+      </p>
+    </div>
+  </div>
+  <div class="workspace-kpis">
+    <div><span class="stat-label">Plan</span><b><%= formatViews(c.plan_views) %> views</b><small class="muted"><%= formatMoney(c.price_cents) %> / <%= PERIODS[c.billing_period] %></small></div>
+    <div><span class="stat-label">Delivered</span><b><%= formatViews(c.total_views) %></b><small class="muted"><%= pct %>% of plan</small></div>
+    <div><span class="stat-label">Drafts</span><b><%= c.pending_drafts %> pending</b><small class="muted"><%= c.approved_drafts %> approved · <%= c.denied_drafts %> denied</small></div>
+  </div>
+  <div class="progress progress-lg"><span style="--w:<%= pct %>%"></span></div>
+</section>
+
+<nav class="tabs" role="tablist">
+  <a href="?tab=posts" class="<%= tab === 'posts' ? 'active' : '' %>">Live posts <span class="count"><%= posts.length %></span></a>
+  <a href="?tab=drafts" class="<%= tab === 'drafts' ? 'active' : '' %>">Drafts <span class="count"><%= drafts.length %></span></a>
+  <a href="?tab=settings" class="<%= tab === 'settings' ? 'active' : '' %>">Client &amp; plan</a>
+</nav>
+
+<% if (tab === 'posts') { %>
+  <details class="card add-card" <%= posts.length ? '' : 'open' %>>
+    <summary><span class="plus">+</span> Add a live post</summary>
+    <form method="post" action="/admin/clients/<%= c.id %>/posts" class="add-form">
+      <%- include('../partials/csrf') %>
+      <div class="grid-3">
+        <label class="field"><span>Subreddit</span><div class="input-prefix"><i>r/</i><input name="subreddit" required placeholder="marketing"></div></label>
+        <label class="field span-2"><span>Post title</span><input name="title" required maxlength="300"></label>
+      </div>
+      <label class="field"><span>Post body <i>optional</i></span><textarea name="body" rows="4"></textarea></label>
+      <div class="grid-2">
+        <label class="field"><span>Views</span><input name="views" inputmode="numeric" placeholder="0 or 12.5k"></label>
+        <label class="field"><span>Link to post <i>optional</i></span><input name="url" type="url" placeholder="https://reddit.com/r/..."></label>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Add post</button></div>
+    </form>
+  </details>
+
+  <% if (!posts.length) { %>
+    <div class="empty card"><h3>No live posts yet</h3><p class="muted">Posts you add here appear on <%= c.company_name %>'s dashboard with their view counts.</p></div>
+  <% } %>
+  <div class="list">
+    <% for (const p of posts) { %>
+      <article class="card item">
+        <div class="item-main">
+          <div class="item-meta"><span class="chip">r/<%= p.subreddit %></span><span class="muted">Added <%= formatDate(p.created_at) %> · views updated <%= formatDate(p.views_updated_at) %></span></div>
+          <h3 class="item-title"><% if (p.url) { %><a href="<%= p.url %>" target="_blank" rel="noopener noreferrer"><%= p.title %> &nearr;</a><% } else { %><%= p.title %><% } %></h3>
+        </div>
+        <form class="views-form" method="post" action="/admin/clients/<%= c.id %>/posts/<%= p.id %>/views">
+          <%- include('../partials/csrf') %>
+          <label><span class="stat-label">Views</span>
+            <input name="views" value="<%= p.views %>" inputmode="numeric" aria-label="Views for <%= p.title %>"></label>
+          <button class="btn btn-primary btn-sm" type="submit">Update</button>
+        </form>
+        <details class="item-edit">
+          <summary>Edit post</summary>
+          <form method="post" action="/admin/clients/<%= c.id %>/posts/<%= p.id %>">
+            <%- include('../partials/csrf') %>
+            <div class="grid-3">
+              <label class="field"><span>Subreddit</span><div class="input-prefix"><i>r/</i><input name="subreddit" value="<%= p.subreddit %>" required></div></label>
+              <label class="field span-2"><span>Post title</span><input name="title" value="<%= p.title %>" required maxlength="300"></label>
+            </div>
+            <label class="field"><span>Post body</span><textarea name="body" rows="4"><%= p.body %></textarea></label>
+            <div class="grid-2">
+              <label class="field"><span>Views</span><input name="views" value="<%= p.views %>" inputmode="numeric"></label>
+              <label class="field"><span>Link to post</span><input name="url" type="url" value="<%= p.url %>"></label>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-danger-ghost btn-sm" type="submit" formaction="/admin/clients/<%= c.id %>/posts/<%= p.id %>/delete" data-confirm="Delete this post? This can't be undone.">Delete</button>
+              <button class="btn btn-primary btn-sm" type="submit">Save changes</button>
+            </div>
+          </form>
+        </details>
+      </article>
+    <% } %>
+  </div>
+<% } %>
+
+<% if (tab === 'drafts') { %>
+  <details class="card add-card" <%= drafts.length ? '' : 'open' %>>
+    <summary><span class="plus">+</span> Add a draft for approval</summary>
+    <form method="post" action="/admin/clients/<%= c.id %>/drafts" class="add-form">
+      <%- include('../partials/csrf') %>
+      <div class="grid-3">
+        <label class="field"><span>Subreddit</span><div class="input-prefix"><i>r/</i><input name="subreddit" required placeholder="startups"></div></label>
+        <label class="field span-2"><span>Post title</span><input name="title" required maxlength="300"></label>
+      </div>
+      <label class="field"><span>Post body</span><textarea name="body" rows="6"></textarea></label>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Send to client for review</button></div>
+    </form>
+  </details>
+
+  <% if (!drafts.length) { %>
+    <div class="empty card"><h3>No drafts yet</h3><p class="muted">Upload the posts you plan to publish. <%= c.company_name %> can approve or deny each one from their portal.</p></div>
+  <% } %>
+  <div class="list">
+    <% for (const d of drafts) { %>
+      <article class="card item item-draft status-<%= d.status %>">
+        <div class="item-main">
+          <div class="item-meta">
+            <span class="chip">r/<%= d.subreddit %></span>
+            <span class="badge badge-<%= d.status %>"><%= statusLabel[d.status] %></span>
+            <span class="muted"><%= d.decided_at ? statusLabel[d.status] + ' ' + formatDate(d.decided_at) : 'Added ' + formatDate(d.created_at) %></span>
+          </div>
+          <h3 class="item-title"><%= d.title %></h3>
+          <% if (d.body) { %><div class="post-body clamp"><%= d.body %></div><% } %>
+          <% if (d.client_note) { %><blockquote class="client-note"><b>Client note:</b> <%= d.client_note %></blockquote><% } %>
+        </div>
+        <% if (d.status === 'approved') { %>
+          <form class="publish-form" method="post" action="/admin/clients/<%= c.id %>/drafts/<%= d.id %>/publish">
+            <%- include('../partials/csrf') %>
+            <input name="url" type="url" placeholder="Link to live post (optional)">
+            <button class="btn btn-primary btn-sm" type="submit">Move to live posts</button>
+          </form>
+        <% } %>
+        <details class="item-edit">
+          <summary>Edit draft</summary>
+          <form method="post" action="/admin/clients/<%= c.id %>/drafts/<%= d.id %>">
+            <%- include('../partials/csrf') %>
+            <div class="grid-3">
+              <label class="field"><span>Subreddit</span><div class="input-prefix"><i>r/</i><input name="subreddit" value="<%= d.subreddit %>" required></div></label>
+              <label class="field span-2"><span>Post title</span><input name="title" value="<%= d.title %>" required maxlength="300"></label>
+            </div>
+            <label class="field"><span>Post body</span><textarea name="body" rows="6"><%= d.body %></textarea></label>
+            <% if (d.status !== 'pending') { %><p class="fine">Changing the content sends this draft back to the client as Pending.</p><% } %>
+            <div class="form-actions">
+              <button class="btn btn-danger-ghost btn-sm" type="submit" formaction="/admin/clients/<%= c.id %>/drafts/<%= d.id %>/delete" data-confirm="Delete this draft?">Delete</button>
+              <button class="btn btn-primary btn-sm" type="submit">Save changes</button>
+            </div>
+          </form>
+        </details>
+      </article>
+    <% } %>
+  </div>
+<% } %>
+
+<% if (tab === 'settings') { %>
+  <div class="settings-grid">
+    <form class="card form-card" method="post" action="/admin/clients/<%= c.id %>">
+      <%- include('../partials/csrf') %>
+      <h2>Company &amp; plan</h2>
+      <label class="field"><span>Company name</span><input name="company_name" value="<%= c.company_name %>" required maxlength="120"></label>
+      <div class="grid-2">
+        <label class="field"><span>Contact name</span><input name="contact_name" value="<%= c.contact_name %>" maxlength="120"></label>
+        <label class="field"><span>Contact email</span><input name="contact_email" type="email" value="<%= c.contact_email %>" maxlength="200"></label>
+      </div>
+      <label class="field"><span>Username</span><input name="username" value="<%= c.username %>" required pattern="[A-Za-z0-9._\-]{3,60}" autocapitalize="none"></label>
+      <% const preset = PLAN_PRESETS.includes(c.plan_views); %>
+      <%- include('../partials/plan-fields', { form: {
+            plan_choice: preset ? String(c.plan_views) : 'custom',
+            plan_custom: preset ? '' : String(c.plan_views),
+            price: (c.price_cents / 100).toString(),
+            billing_period: c.billing_period } }) %>
+      <label class="field"><span>Internal notes <i>only you see this</i></span><textarea name="notes" rows="3"><%= c.notes %></textarea></label>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Save</button></div>
+    </form>
+
+    <div class="stack">
+      <div class="card form-card">
+        <h2>Company logo</h2>
+        <div class="logo-row">
+          <%- include('../partials/client-logo', { c, size: 'avatar-xl' }) %>
+          <form method="post" action="/admin/clients/<%= c.id %>/logo" enctype="multipart/form-data" class="logo-form">
+            <%- include('../partials/csrf') %>
+            <label class="file-input"><input type="file" name="logo" accept="image/png,image/jpeg,image/webp,image/gif" required data-logo-input><span>Choose image…</span></label>
+            <p class="fine">PNG, JPG, WebP or GIF, up to 2 MB. Square images look best.</p>
+            <button class="btn btn-primary btn-sm" type="submit">Upload logo</button>
+          </form>
+        </div>
+        <% if (c.logo_file) { %>
+          <form method="post" action="/admin/clients/<%= c.id %>/logo/delete" class="mt">
+            <%- include('../partials/csrf') %>
+            <button class="btn btn-danger-ghost btn-sm" type="submit" data-confirm="Remove this logo?">Remove logo</button>
+          </form>
+        <% } %>
+      </div>
+
+      <form class="card form-card" method="post" action="/admin/clients/<%= c.id %>/password">
+        <%- include('../partials/csrf') %>
+        <h2>Reset password</h2>
+        <label class="field"><span>New password</span>
+          <div class="input-action">
+            <input name="password" type="text" minlength="8" required autocomplete="new-password" data-password>
+            <button type="button" class="btn btn-ghost btn-sm" data-generate>Generate</button>
+          </div>
+        </label>
+        <div class="form-actions"><button class="btn btn-primary btn-sm" type="submit">Set password</button></div>
+      </form>
+
+      <form class="card form-card" method="post" action="/admin/clients/<%= c.id %>/status">
+        <%- include('../partials/csrf') %>
+        <h2>Account status</h2>
+        <% if (c.active) { %>
+          <p class="muted">Deactivating signs the client out and blocks their login. Their posts and drafts are kept.</p>
+          <input type="hidden" name="active" value="0">
+          <button class="btn btn-danger-ghost btn-sm" type="submit" data-confirm="Deactivate <%= c.company_name %>? They will be signed out.">Deactivate client</button>
+        <% } else { %>
+          <p class="muted">This client is inactive and can't sign in.</p>
+          <input type="hidden" name="active" value="1">
+          <button class="btn btn-primary btn-sm" type="submit">Reactivate client</button>
+        <% } %>
+      </form>
+
+      <form class="card form-card danger-zone" method="post" action="/admin/clients/<%= c.id %>/delete">
+        <%- include('../partials/csrf') %>
+        <h2>Delete permanently</h2>
+        <p class="muted">Removes the client, their logo, all posts and drafts. Type <b><%= c.company_name %></b> to confirm.</p>
+        <input name="confirm_name" autocomplete="off" required aria-label="Company name">
+        <button class="btn btn-danger btn-sm mt" type="submit">Delete client</button>
+      </form>
+    </div>
+  </div>
+<% } %>
+<%- include('../partials/admin-bottom') %>

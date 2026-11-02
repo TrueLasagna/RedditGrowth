@@ -1,0 +1,33 @@
+<%- include('head', { bodyClass: 'admin' }) %>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="sidebar-brand" href="/admin"><%- include('brand') %></a>
+    <span class="sidebar-tag">Admin</span>
+    <nav class="sidebar-nav">
+      <a href="/admin" class="<%= path === '/' ? 'active' : '' %>">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 13h8V3H3zm0 8h8v-6H3zm10 0h8V11h-8zm0-18v6h8V3z"/></svg>Overview
+        <% if (pendingTotal) { %><span class="pill"><%= pendingTotal %></span><% } %>
+      </a>
+      <a href="/admin/clients/new" class="<%= path === '/clients/new' ? 'active' : '' %>">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm-9-2V7H4v3H1v2h3v3h2v-3h3v-2zm9 4c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z"/></svg>New client
+      </a>
+      <a href="/admin/settings" class="<%= path === '/settings' ? 'active' : '' %>">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.3 7.3 0 0 0-1.7-1L15 3h-4l-.4 2.7a7.3 7.3 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.5 7.5 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.3 7.3 0 0 0 1.7 1L11 21h4l.4-2.7a7.3 7.3 0 0 0 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 3.5-3.5 3.5 3.5 0 0 1-3.5 3.5z"/></svg>Settings
+      </a>
+    </nav>
+    <form method="post" action="/admin/logout" class="sidebar-foot">
+      <%- include('csrf') %>
+      <span class="muted-light">Signed in as <b><%= admin.username %></b></span>
+      <button class="btn btn-ghost-light btn-sm" type="submit">Sign out</button>
+    </form>
+  </aside>
+  <div class="sidebar-backdrop" data-nav-close></div>
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn" type="button" data-nav-toggle aria-label="Open menu">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+      </button>
+      <a href="/admin" class="topbar-brand"><%- include('brand') %></a>
+    </header>
+    <main class="content">
+      <%- include('flash') %>

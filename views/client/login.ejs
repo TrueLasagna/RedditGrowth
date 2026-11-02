@@ -1,0 +1,17 @@
+<%- include('../partials/head', { bodyClass: 'auth' }) %>
+<div class="auth-wrap">
+  <form class="auth-card" method="post" action="/login" autocomplete="on">
+    <div class="auth-brand"><%- include('../partials/brand') %></div>
+    <span class="eyebrow">Client portal</span>
+    <h1>Sign in</h1>
+    <p class="muted">Track your campaign's views and review upcoming posts.</p>
+    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+    <label class="field"><span>Username</span>
+      <input name="username" value="<%= username %>" autocomplete="username" autocapitalize="none" required autofocus></label>
+    <label class="field"><span>Password</span>
+      <input name="password" type="password" autocomplete="current-password" required></label>
+    <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+    <p class="fine">Need access? Your login is provided by your RedditGrowth account manager.</p>
+  </form>
+</div>
+<%- include('../partials/foot') %>

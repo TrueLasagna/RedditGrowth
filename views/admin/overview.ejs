@@ -1,0 +1,79 @@
+<%- include('../partials/admin-top') %>
+<div class="page-head">
+  <div>
+    <h1>Business overview</h1>
+    <p class="muted">Everything across your RedditGrowth clients at a glance.</p>
+  </div>
+  <a class="btn btn-primary" href="/admin/clients/new">+ New client</a>
+</div>
+
+<section class="stats">
+  <div class="stat">
+    <span class="stat-label">Total clients</span>
+    <span class="stat-value"><%= stats.total %></span>
+    <span class="stat-sub"><%= stats.inactive %> inactive</span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Active clients</span>
+    <span class="stat-value"><%= stats.active %></span>
+    <span class="stat-sub"><%= stats.total ? Math.round(stats.active / stats.total * 100) : 0 %>% of all clients</span>
+  </div>
+  <div class="stat stat-accent">
+    <span class="stat-label">Monthly recurring revenue</span>
+    <span class="stat-value"><%= formatMoney(stats.monthlyRevenue) %></span>
+    <span class="stat-sub"><%= stats.otherRevenue ? '+ ' + formatMoney(stats.otherRevenue) + ' campaign / one-time' : 'from active monthly plans' %></span>
+  </div>
+  <div class="stat">
+    <span class="stat-label">Views delivered</span>
+    <span class="stat-value"><%= formatViews(stats.viewsDelivered) %></span>
+    <span class="stat-sub">of <%= formatViews(stats.viewsPromised) %> on active plans</span>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>Clients</h2>
+    <% if (stats.pending) { %><span class="badge badge-pending"><%= stats.pending %> draft<%= stats.pending === 1 ? '' : 's' %> awaiting clients</span><% } %>
+  </div>
+  <% if (!clients.length) { %>
+    <div class="empty">
+      <h3>No clients yet</h3>
+      <p class="muted">Create your first client to give them a login and start tracking their campaign.</p>
+      <a class="btn btn-primary" href="/admin/clients/new">Create a client</a>
+    </div>
+  <% } else { %>
+    <div class="table-wrap">
+      <table class="table table-cards">
+        <thead><tr>
+          <th>Client</th><th>Status</th><th>Plan</th><th>Price</th><th>Views delivered</th><th>Drafts</th><th></th>
+        </tr></thead>
+        <tbody>
+        <% for (const c of clients) { const pct = c.plan_views ? Math.min(100, Math.round(c.total_views / c.plan_views * 100)) : 0; %>
+          <tr class="<%= c.active ? '' : 'row-muted' %>">
+            <td data-label="Client">
+              <a class="client-cell" href="/admin/clients/<%= c.id %>">
+                <%- include('../partials/client-logo', { c, size: 'avatar-sm' }) %>
+                <span><b><%= c.company_name %></b><small class="muted">@<%= c.username %></small></span>
+              </a>
+            </td>
+            <td data-label="Status"><span class="badge <%= c.active ? 'badge-approved' : 'badge-muted' %>"><%= c.active ? 'Active' : 'Inactive' %></span></td>
+            <td data-label="Plan"><b><%= formatViews(c.plan_views) %></b> views</td>
+            <td data-label="Price"><%= formatMoney(c.price_cents) %><small class="muted"> / <%= PERIODS[c.billing_period] %></small></td>
+            <td data-label="Views delivered">
+              <div class="progress-cell">
+                <span><%= formatViews(c.total_views) %> <small class="muted"><%= pct %>%</small></span>
+                <div class="progress"><span style="--w:<%= pct %>%"></span></div>
+              </div>
+            </td>
+            <td data-label="Drafts">
+              <% if (c.pending_drafts) { %><span class="badge badge-pending"><%= c.pending_drafts %> pending</span><% } else { %><span class="muted">—</span><% } %>
+            </td>
+            <td class="td-actions"><a class="btn btn-ghost btn-sm" href="/admin/clients/<%= c.id %>">Open</a></td>
+          </tr>
+        <% } %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</section>
+<%- include('../partials/admin-bottom') %>

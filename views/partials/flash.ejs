@@ -1,0 +1,6 @@
+<% if (flash) { %>
+  <div class="alert alert-<%= flash.type === 'error' ? 'error' : 'success' %>" role="status" data-dismiss>
+    <span><%= flash.text %></span>
+    <button type="button" class="alert-x" aria-label="Dismiss">&times;</button>
+  </div>
+<% } %>

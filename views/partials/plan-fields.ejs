@@ -1,0 +1,35 @@
+<%
+  // form: { plan_choice, plan_custom, price, billing_period }
+  const choice = String(form.plan_choice || '');
+%>
+<fieldset class="field">
+  <legend>View plan</legend>
+  <div class="plan-picker" data-plan-picker>
+    <% for (const v of PLAN_PRESETS) { %>
+      <label class="plan-opt">
+        <input type="radio" name="plan_choice" value="<%= v %>" <%= choice === String(v) ? 'checked' : '' %>>
+        <span><b><%= formatViews(v) %></b><small>views</small></span>
+      </label>
+    <% } %>
+    <label class="plan-opt">
+      <input type="radio" name="plan_choice" value="custom" <%= choice === 'custom' ? 'checked' : '' %>>
+      <span><b>Custom</b><small>any amount</small></span>
+    </label>
+  </div>
+  <label class="field plan-custom" data-plan-custom <%= choice === 'custom' ? '' : 'hidden' %>>
+    <span>Custom view count</span>
+    <input name="plan_custom" value="<%= form.plan_custom || '' %>" placeholder="e.g. 750k or 2.5m" inputmode="text">
+  </label>
+</fieldset>
+<div class="grid-2">
+  <label class="field"><span>Price (USD)</span>
+    <div class="input-prefix"><i>$</i><input name="price" value="<%= form.price || '' %>" placeholder="1500" inputmode="decimal" required></div>
+  </label>
+  <label class="field"><span>Billed</span>
+    <select name="billing_period">
+      <% for (const [k, label] of Object.entries(PERIODS)) { %>
+        <option value="<%= k %>" <%= form.billing_period === k ? 'selected' : '' %>><%= k === 'month' ? 'Monthly' : k === 'campaign' ? 'Per campaign' : 'One-time' %></option>
+      <% } %>
+    </select>
+  </label>
+</div>

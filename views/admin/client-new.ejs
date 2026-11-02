@@ -1,0 +1,40 @@
+<%- include('../partials/admin-top') %>
+<div class="page-head">
+  <div>
+    <a class="back" href="/admin">&larr; Overview</a>
+    <h1>New client</h1>
+    <p class="muted">Create a login for your client and set their plan. You'll add their logo on the next screen.</p>
+  </div>
+</div>
+<% if (errors.length) { %><div class="alert alert-error"><ul><% for (const e of errors) { %><li><%= e %></li><% } %></ul></div><% } %>
+<form class="card form-card" method="post" action="/admin/clients">
+  <%- include('../partials/csrf') %>
+  <h2>Company</h2>
+  <label class="field"><span>Company name</span><input name="company_name" value="<%= form.company_name || '' %>" required maxlength="120"></label>
+  <div class="grid-2">
+    <label class="field"><span>Contact name <i>optional</i></span><input name="contact_name" value="<%= form.contact_name || '' %>" maxlength="120"></label>
+    <label class="field"><span>Contact email <i>optional</i></span><input name="contact_email" type="email" value="<%= form.contact_email || '' %>" maxlength="200"></label>
+  </div>
+
+  <h2>Login</h2>
+  <div class="grid-2">
+    <label class="field"><span>Username</span><input name="username" value="<%= form.username || '' %>" required pattern="[A-Za-z0-9._\-]{3,60}" autocapitalize="none" autocomplete="off"></label>
+    <label class="field"><span>Password</span>
+      <div class="input-action">
+        <input name="password" type="text" minlength="8" required autocomplete="new-password" data-password>
+        <button type="button" class="btn btn-ghost btn-sm" data-generate>Generate</button>
+      </div>
+    </label>
+  </div>
+  <p class="fine">Share these with your client. Passwords are stored encrypted, so you won't be able to see this one again (you can always set a new one).</p>
+
+  <h2>Plan</h2>
+  <%- include('../partials/plan-fields', { form }) %>
+  <label class="field"><span>Internal notes <i>optional, only you see this</i></span><textarea name="notes" rows="3"><%= form.notes || '' %></textarea></label>
+
+  <div class="form-actions">
+    <a class="btn btn-ghost" href="/admin">Cancel</a>
+    <button class="btn btn-primary" type="submit">Create client</button>
+  </div>
+</form>
+<%- include('../partials/admin-bottom') %>

@@ -1,0 +1,24 @@
+{
+  "name": "redditgrowth-portal",
+  "version": "1.0.0",
+  "private": true,
+  "description": "RedditGrowth client portal: admin workspace and branded client dashboards.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "seed": "node scripts/seed-demo.js",
+    "reset-admin": "node scripts/reset-admin.js",
+    "test": "node --test test/*.test.js"
+  },
+  "engines": { "node": ">=20" },
+  "repository": { "type": "git", "url": "git+https://github.com/TrueLasagna/redditgrowth.git" },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "ejs": "^7.0.2",
+    "express": "^4.22.3",
+    "helmet": "^8.3.0",
+    "multer": "^2.5.0"
+  }
+}

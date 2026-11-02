@@ -1,0 +1,68 @@
+<%- include('../partials/client-top') %>
+<%
+  const pct = client.plan_views ? Math.round(totalViews / client.plan_views * 100) : 0;
+  const remaining = Math.max(0, client.plan_views - totalViews);
+%>
+<section class="hero card">
+  <div class="hero-id">
+    <%- include('../partials/client-logo', { c: client, size: 'avatar-xl' }) %>
+    <div>
+      <span class="eyebrow">Your campaign</span>
+      <h1><%= client.company_name %></h1>
+    </div>
+  </div>
+  <div class="hero-stats">
+    <div class="hero-stat">
+      <span class="stat-label">Total views so far</span>
+      <span class="hero-number"><%= formatNumber(totalViews) %></span>
+    </div>
+    <div class="hero-stat">
+      <span class="stat-label">Your plan</span>
+      <span class="hero-number sm"><%= formatViews(client.plan_views) %> views</span>
+      <small class="muted"><%= formatMoney(client.price_cents) %> / <%= PERIODS[client.billing_period] %></small>
+    </div>
+    <div class="hero-stat">
+      <span class="stat-label">Live posts</span>
+      <span class="hero-number sm"><%= posts.length %></span>
+    </div>
+  </div>
+  <div class="hero-progress">
+    <div class="progress progress-lg"><span style="--w:<%= Math.min(100, pct) %>%"></span></div>
+    <div class="progress-legend">
+      <span><b><%= pct %>%</b> of your <%= formatViews(client.plan_views) %> view plan delivered</span>
+      <span class="muted"><%= remaining ? formatNumber(remaining) + ' to go' : 'Plan goal reached 🎉' %></span>
+    </div>
+  </div>
+</section>
+
+<% if (pendingCount) { %>
+  <a class="callout" href="/drafts">
+    <span><b><%= pendingCount %> draft<%= pendingCount === 1 ? '' : 's' %></b> waiting for your approval</span>
+    <span class="btn btn-primary btn-sm">Review now &rarr;</span>
+  </a>
+<% } %>
+
+<section>
+  <div class="section-head"><h2>Live posts</h2><span class="muted"><%= posts.length %> post<%= posts.length === 1 ? '' : 's' %></span></div>
+  <% if (!posts.length) { %>
+    <div class="empty card"><h3>Your posts will appear here</h3><p class="muted">As soon as your first post goes live, you'll see it here with its view count.</p></div>
+  <% } else { %>
+    <div class="post-list">
+      <% for (const p of posts) { const share = totalViews ? Math.round(p.views / totalViews * 100) : 0; %>
+        <article class="card post">
+          <div class="post-main">
+            <span class="chip">r/<%= p.subreddit %></span>
+            <h3><% if (p.url) { %><a href="<%= p.url %>" target="_blank" rel="noopener noreferrer"><%= p.title %></a><% } else { %><%= p.title %><% } %></h3>
+            <small class="muted">Posted <%= formatDate(p.created_at) %></small>
+          </div>
+          <div class="post-views">
+            <b><%= formatNumber(p.views) %></b>
+            <small class="muted">views</small>
+            <div class="progress progress-thin"><span style="--w:<%= share %>%"></span></div>
+          </div>
+        </article>
+      <% } %>
+    </div>
+  <% } %>
+</section>
+<%- include('../partials/client-bottom') %>

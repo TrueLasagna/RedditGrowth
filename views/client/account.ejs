@@ -1,0 +1,11 @@
+<%- include('../partials/client-top') %>
+<div class="section-head page"><div><h1>Account</h1><p class="muted">Signed in as <b><%= client.username %></b>.</p></div></div>
+<form class="card form-card narrow" method="post" action="/account/password">
+  <%- include('../partials/csrf') %>
+  <h2>Change password</h2>
+  <label class="field"><span>Current password</span><input name="current" type="password" autocomplete="current-password" required></label>
+  <label class="field"><span>New password</span><input name="password" type="password" minlength="8" autocomplete="new-password" required></label>
+  <label class="field"><span>Confirm new password</span><input name="confirm" type="password" minlength="8" autocomplete="new-password" required></label>
+  <div class="form-actions"><button class="btn btn-primary" type="submit">Update password</button></div>
+</form>
+<%- include('../partials/client-bottom') %>

@@ -1,0 +1,23 @@
+<%- include('head', { bodyClass: 'client' }) %>
+<header class="client-header">
+  <div class="client-header-inner">
+    <a href="/" class="client-id">
+      <%- include('client-logo', { c: client, size: 'avatar-md' }) %>
+      <span class="client-id-text">
+        <b><%= client.company_name %></b>
+        <small>Client portal</small>
+      </span>
+    </a>
+    <nav class="client-nav">
+      <a href="/" class="<%= path === '/' ? 'active' : '' %>">Dashboard</a>
+      <a href="/drafts" class="<%= path === '/drafts' ? 'active' : '' %>">Drafts<% if (pendingCount) { %> <span class="pill"><%= pendingCount %></span><% } %></a>
+      <a href="/account" class="<%= path === '/account' ? 'active' : '' %>">Account</a>
+    </nav>
+    <form method="post" action="/logout" class="client-logout">
+      <%- include('csrf') %>
+      <button class="btn btn-ghost btn-sm" type="submit">Sign out</button>
+    </form>
+  </div>
+</header>
+<main class="client-main">
+  <%- include('flash') %>

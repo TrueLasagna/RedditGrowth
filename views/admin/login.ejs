@@ -1,0 +1,16 @@
+<%- include('../partials/head', { bodyClass: 'auth auth-admin' }) %>
+<div class="auth-wrap">
+  <form class="auth-card" method="post" action="/admin/login" autocomplete="on">
+    <div class="auth-brand"><%- include('../partials/brand') %></div>
+    <span class="eyebrow">Admin portal</span>
+    <h1>Welcome back</h1>
+    <p class="muted">Sign in to manage clients, posts and campaigns.</p>
+    <% if (error) { %><div class="alert alert-error"><%= error %></div><% } %>
+    <label class="field"><span>Username</span>
+      <input name="username" value="<%= username %>" autocomplete="username" required autofocus></label>
+    <label class="field"><span>Password</span>
+      <input name="password" type="password" autocomplete="current-password" required></label>
+    <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+  </form>
+</div>
+<%- include('../partials/foot') %>

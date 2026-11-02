@@ -1,0 +1,60 @@
+<%- include('../partials/client-top') %>
+<% const label = { pending: 'Pending', approved: 'Approved', denied: 'Denied', all: 'All' }; %>
+<div class="section-head page">
+  <div>
+    <h1>Draft posts</h1>
+    <p class="muted">Review the posts we've planned for your campaign. Approve the ones you like, or deny with a note so we can rework them.</p>
+  </div>
+</div>
+
+<nav class="segmented" aria-label="Filter drafts">
+  <% for (const k of ['pending', 'approved', 'denied', 'all']) { %>
+    <a href="?status=<%= k %>" class="<%= filter === k ? 'active' : '' %> seg-<%= k %>"><%= label[k] %> <span class="count"><%= counts[k] %></span></a>
+  <% } %>
+</nav>
+
+<% if (!drafts.length) { %>
+  <div class="empty card">
+    <h3><%= filter === 'pending' ? "You're all caught up" : 'Nothing here yet' %></h3>
+    <p class="muted"><%= filter === 'pending' ? 'There are no drafts waiting for your review.' : 'No ' + (filter === 'all' ? '' : label[filter].toLowerCase() + ' ') + 'drafts yet.' %></p>
+  </div>
+<% } %>
+
+<div class="list">
+  <% for (const d of drafts) { %>
+    <article class="card draft status-<%= d.status %>">
+      <header class="draft-head">
+        <span class="chip">r/<%= d.subreddit %></span>
+        <span class="badge badge-<%= d.status %>"><%= label[d.status] %></span>
+      </header>
+      <h3 class="draft-title"><%= d.title %></h3>
+      <% if (d.body) { %><div class="post-body"><%= d.body %></div><% } %>
+      <form method="post" action="/drafts/<%= d.id %>" class="decision">
+        <%- include('../partials/csrf') %>
+        <input type="hidden" name="return_to" value="<%= filter %>">
+        <% if (d.status === 'pending') { %>
+          <label class="field"><span>Note for the team <i>optional</i></span>
+            <textarea name="note" rows="2" placeholder="Anything you'd like changed?"><%= d.client_note %></textarea></label>
+          <div class="decision-actions">
+            <button class="btn btn-deny" type="submit" name="decision" value="deny">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12 19 6.4 17.6 5 12 10.6z"/></svg>Deny
+            </button>
+            <button class="btn btn-approve" type="submit" name="decision" value="approve">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4z"/></svg>Approve
+            </button>
+          </div>
+        <% } else { %>
+          <input type="hidden" name="note" value="<%= d.client_note %>">
+          <% if (d.client_note) { %><blockquote class="client-note"><b>Your note:</b> <%= d.client_note %></blockquote><% } %>
+          <div class="decision-done">
+            <span class="muted"><%= label[d.status] %> on <%= formatDate(d.decided_at) %></span>
+            <button class="btn btn-ghost btn-sm" type="submit" name="decision" value="<%= d.status === 'approved' ? 'deny' : 'approve' %>">
+              Change to <%= d.status === 'approved' ? 'Denied' : 'Approved' %>
+            </button>
+          </div>
+        <% } %>
+      </form>
+    </article>
+  <% } %>
+</div>
+<%- include('../partials/client-bottom') %>
