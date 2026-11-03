@@ -158,3 +158,17 @@ test('approved drafts can be moved to live posts', async () => {
   assert.equal(await db.one('SELECT id FROM drafts WHERE id=$1', d.id), undefined);
   assert.ok(await db.one("SELECT id FROM posts WHERE client_id=$1 AND title='Other draft' AND views=0", otherId));
 });
+
+test('admin can change their username and password', async () => {
+  const a = agent(); a.home = '/admin/settings';
+  await a('POST', '/admin/login', { username: 'boss', password: 'admin-pass-123' });
+  let csrf = await a.csrf();
+  await a('POST', '/admin/settings/username', { _csrf: csrf, username: 'chief', current: 'wrong-pass' });
+  assert.ok(await db.one("SELECT 1 FROM admins WHERE username='boss'"), 'wrong password keeps old username');
+  await a('POST', '/admin/settings/username', { _csrf: csrf, username: 'chief', current: 'admin-pass-123' });
+  assert.ok(await db.one("SELECT 1 FROM admins WHERE username='chief'"));
+  await a('POST', '/admin/settings/password', { _csrf: csrf, current: 'admin-pass-123', password: 'new-pass-456', confirm: 'new-pass-456' });
+  const b = agent();
+  assert.equal((await b('POST', '/admin/login', { username: 'boss', password: 'new-pass-456' })).status, 401);
+  assert.equal((await b('POST', '/admin/login', { username: 'chief', password: 'new-pass-456' })).status, 302);
+});

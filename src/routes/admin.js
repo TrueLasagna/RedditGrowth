@@ -337,6 +337,26 @@ router.post('/clients/:id/drafts/:draftId/publish', async (req, res) => {
 
 router.get('/settings', (req, res) => res.render('admin/settings', { title: 'Settings' }));
 
+router.post('/settings/username', async (req, res) => {
+  const admin = await db.one('SELECT * FROM admins WHERE id = $1', req.session.userId);
+  if (!(await auth.checkPassword(String(req.body.current || ''), admin.password_hash))) {
+    res.flash('error', 'Current password is incorrect.');
+    return res.redirect('/admin/settings');
+  }
+  const username = clean(req.body.username, 60);
+  if (!/^[a-zA-Z0-9._-]{3,60}$/.test(username)) {
+    res.flash('error', 'Username must be 3–60 characters: letters, numbers, dots, dashes or underscores.');
+    return res.redirect('/admin/settings');
+  }
+  if (await db.one('SELECT 1 FROM admins WHERE lower(username) = lower($1) AND id <> $2', username, admin.id)) {
+    res.flash('error', 'That username is already taken.');
+    return res.redirect('/admin/settings');
+  }
+  await db.run('UPDATE admins SET username = $1 WHERE id = $2', username, admin.id);
+  res.flash('success', `Username changed to ${username}. Use it next time you sign in.`);
+  res.redirect('/admin/settings');
+});
+
 router.post('/settings/password', async (req, res) => {
   const admin = await db.one('SELECT * FROM admins WHERE id = $1', req.session.userId);
   if (!(await auth.checkPassword(String(req.body.current || ''), admin.password_hash))) {

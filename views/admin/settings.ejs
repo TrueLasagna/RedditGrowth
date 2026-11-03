@@ -1,11 +1,20 @@
 <%- include('../partials/admin-top') %>
 <div class="page-head"><div><h1>Settings</h1><p class="muted">Your admin account.</p></div></div>
-<form class="card form-card narrow" method="post" action="/admin/settings/password">
-  <%- include('../partials/csrf') %>
-  <h2>Change password</h2>
-  <label class="field"><span>Current password</span><input name="current" type="password" autocomplete="current-password" required></label>
-  <label class="field"><span>New password</span><input name="password" type="password" minlength="8" autocomplete="new-password" required></label>
-  <label class="field"><span>Confirm new password</span><input name="confirm" type="password" minlength="8" autocomplete="new-password" required></label>
-  <div class="form-actions"><button class="btn btn-primary" type="submit">Update password</button></div>
-</form>
+<div class="stack narrow-stack">
+  <form class="card form-card narrow" method="post" action="/admin/settings/username">
+    <%- include('../partials/csrf') %>
+    <h2>Change username</h2>
+    <label class="field"><span>New username</span><input name="username" value="<%= admin.username %>" autocomplete="username" autocapitalize="none" minlength="3" maxlength="60" required></label>
+    <label class="field"><span>Current password</span><input name="current" type="password" autocomplete="current-password" required></label>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Update username</button></div>
+  </form>
+  <form class="card form-card narrow" method="post" action="/admin/settings/password">
+    <%- include('../partials/csrf') %>
+    <h2>Change password</h2>
+    <label class="field"><span>Current password</span><input name="current" type="password" autocomplete="current-password" required></label>
+    <label class="field"><span>New password</span><input name="password" type="password" minlength="8" autocomplete="new-password" required></label>
+    <label class="field"><span>Confirm new password</span><input name="confirm" type="password" minlength="8" autocomplete="new-password" required></label>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">Update password</button></div>
+  </form>
+</div>
 <%- include('../partials/admin-bottom') %>

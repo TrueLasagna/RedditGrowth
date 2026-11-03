@@ -108,6 +108,7 @@ small { font-size: .8rem; }
 .form-card h2 { margin: 1.4rem 0 .9rem; }
 .form-card h2:first-of-type { margin-top: 0; }
 .form-card.narrow { max-width: 520px; }
+.narrow-stack { max-width: 520px; }
 .field { display: block; margin: 0 0 1rem; border: 0; padding: 0; min-width: 0; }
 .field > span, .field > legend { display: block; font-size: .84rem; font-weight: 600; color: var(--ink-2); margin-bottom: .35rem; padding: 0; }
 .field i { font-style: normal; font-weight: 400; color: var(--muted); }
