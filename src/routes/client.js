@@ -13,20 +13,23 @@ router.get('/login', (req, res) => {
 router.post('/login', async (req, res) => {
   const username = clean(req.body.username, 100);
   const password = String(req.body.password || '');
-  const key = `client:${req.ip}:${username.toLowerCase()}`;
   const fail = (status, error) => res.status(status).render('client/login', { title: 'Client Portal', username, error });
-  if (await auth.tooManyAttempts(key)) return fail(429, 'Too many attempts. Try again in 15 minutes.');
   const client = await db.one('SELECT * FROM clients WHERE lower(username) = lower($1)', username);
-  if (!client || !(await auth.checkPassword(password, client.password_hash))) {
-    await auth.recordFailure(key);
-    return fail(401, 'Incorrect username or password.');
+  if (client && await auth.checkPassword(password, client.password_hash)) {
+    if (!client.active) return fail(403, 'This account is inactive. Please contact RedditGrowth.');
+    if (req.session) await auth.destroySession(req, res);
+    await auth.createSession(res, 'client', client.id);
+    if (Math.random() < 0.1) await auth.purgeExpired();
+    return res.redirect('/');
   }
-  if (!client.active) return fail(403, 'This account is inactive. Please contact RedditGrowth.');
-  await auth.clearFailures(key);
-  if (req.session) await auth.destroySession(req, res);
-  await auth.createSession(res, 'client', client.id);
-  if (Math.random() < 0.1) await auth.purgeExpired();
-  res.redirect('/');
+  // The admin can sign in here too and is taken to the admin side.
+  const admin = await db.one('SELECT * FROM admins WHERE lower(username) = lower($1)', username);
+  if (admin && await auth.checkPassword(password, admin.password_hash)) {
+    if (req.session) await auth.destroySession(req, res);
+    await auth.createSession(res, 'admin', admin.id);
+    return res.redirect('/admin');
+  }
+  return fail(401, 'Incorrect username or password.');
 });
 
 router.post('/logout', async (req, res) => {

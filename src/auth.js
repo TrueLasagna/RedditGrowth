@@ -77,31 +77,13 @@ function checkCsrf(req, res, next) {
   next();
 }
 
-// Login throttle stored in the database (works across serverless instances):
-// 8 failed attempts per IP+username per 15 minutes.
-const WINDOW = 15 * 60 * 1000;
-async function tooManyAttempts(key) {
-  const a = await db.one('SELECT * FROM login_attempts WHERE key = $1', key);
-  return !!a && Date.now() - a.first_at < WINDOW && a.count >= 8;
-}
-async function recordFailure(key) {
-  const now = Date.now();
-  await db.run(`INSERT INTO login_attempts (key, first_at, count) VALUES ($1, $2, 1)
-    ON CONFLICT (key) DO UPDATE SET
-      count = CASE WHEN login_attempts.first_at < $3 THEN 1 ELSE login_attempts.count + 1 END,
-      first_at = CASE WHEN login_attempts.first_at < $3 THEN $2 ELSE login_attempts.first_at END`,
-  key, now, now - WINDOW);
-}
-const clearFailures = (key) => db.run('DELETE FROM login_attempts WHERE key = $1', key);
-
 // Called occasionally on login instead of a timer (serverless has no long-running process).
 async function purgeExpired() {
   await db.run('DELETE FROM sessions WHERE expires_at < $1', Date.now());
-  await db.run('DELETE FROM login_attempts WHERE first_at < $1', Date.now() - WINDOW);
 }
 
 module.exports = {
   hashPassword, checkPassword, validatePassword,
   createSession, destroySession, destroyUserSessions, loadSession, checkCsrf,
-  tooManyAttempts, recordFailure, clearFailures, purgeExpired,
+  purgeExpired,
 };

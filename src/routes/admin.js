@@ -17,15 +17,11 @@ router.get('/login', (req, res) => {
 router.post('/login', async (req, res) => {
   const username = clean(req.body.username, 100);
   const password = String(req.body.password || '');
-  const key = `admin:${req.ip}:${username.toLowerCase()}`;
   const fail = (status, error) => res.status(status).render('admin/login', { title: 'Admin sign in', username, error });
-  if (await auth.tooManyAttempts(key)) return fail(429, 'Too many attempts. Try again in 15 minutes.');
   const admin = await db.one('SELECT * FROM admins WHERE lower(username) = lower($1)', username);
   if (!admin || !(await auth.checkPassword(password, admin.password_hash))) {
-    await auth.recordFailure(key);
     return fail(401, 'Incorrect username or password.');
   }
-  await auth.clearFailures(key);
   if (req.session) await auth.destroySession(req, res);
   await auth.createSession(res, 'admin', admin.id);
   if (Math.random() < 0.1) await auth.purgeExpired();

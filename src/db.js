@@ -73,11 +73,6 @@ CREATE TABLE IF NOT EXISTS sessions (
   expires_at BIGINT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS login_attempts (
-  key TEXT PRIMARY KEY,
-  first_at BIGINT NOT NULL,
-  count INTEGER NOT NULL
-);
 COMMIT;
 `;
 

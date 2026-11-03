@@ -172,3 +172,11 @@ test('admin can change their username and password', async () => {
   assert.equal((await b('POST', '/admin/login', { username: 'boss', password: 'new-pass-456' })).status, 401);
   assert.equal((await b('POST', '/admin/login', { username: 'chief', password: 'new-pass-456' })).status, 302);
 });
+
+test('the client sign-in page also accepts the admin login, with no lockout', async () => {
+  const a = agent();
+  for (let i = 0; i < 10; i++) assert.equal((await a('POST', '/login', { username: 'chief', password: 'nope' })).status, 401);
+  const r = await a('POST', '/login', { username: 'chief', password: 'new-pass-456' });
+  assert.equal(r.headers.get('location'), '/admin');
+  assert.equal((await a('GET', '/admin')).status, 200);
+});

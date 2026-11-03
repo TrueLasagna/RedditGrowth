@@ -61,7 +61,7 @@ To work against your Neon database instead, set `DATABASE_URL` first. Forgot the
 
 - Passwords are hashed with bcrypt (cost 12). Plain-text passwords are never stored.
 - Sessions are random tokens in HTTP-only, SameSite, Secure cookies. Only a hash of each token is stored.
-- Every form is protected against CSRF, and failed logins are rate-limited.
+- Every form is protected against CSRF.
 - Logo uploads are checked by file content: PNG, JPG, WebP or GIF only, 2 MB max.
 - Strict security headers via Helmet.
 
