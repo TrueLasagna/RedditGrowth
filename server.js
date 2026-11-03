@@ -58,7 +58,22 @@ app.use(helmet({
 app.use(express.static(path.join(__dirname, 'public'), { maxAge: '7d', index: false }));
 app.use(express.urlencoded({ extended: false, limit: '200kb' }));
 app.use((req, res, next) => { req.body ??= {}; next(); });
-app.use(async (req, res, next) => { await ensureSetup(); next(); });
+// If the database isn't reachable, say why (no secrets) so it can be fixed in Vercel.
+function setupHint(e) {
+  if (!process.env.DATABASE_URL && process.env.VERCEL) return 'DATABASE_URL is not set. In Vercel, add it under Settings → Environment Variables (tick Production), then redeploy.';
+  if (e.code === 'ENOTFOUND' || e.code === 'ECONNREFUSED' || e.code === 'ETIMEDOUT') return "Can't reach the database server. Check that DATABASE_URL is the full Neon connection string, then redeploy.";
+  if (e.code === '28P01' || e.code === '28000') return 'The database rejected the password. Copy the connection string again from Neon → Connect, update DATABASE_URL in Vercel, then redeploy.';
+  if (e.code === '3D000') return 'The database name in DATABASE_URL does not exist in Neon. Copy the connection string again from Neon → Connect.';
+  if (/Invalid URL|invalid connection/i.test(e.message)) return 'DATABASE_URL is not a valid connection string. It should start with postgresql:// and have no quotes or spaces.';
+  return `Database error${e.code ? ` (code ${e.code})` : ''}. Check DATABASE_URL in Vercel, then redeploy.`;
+}
+app.use(async (req, res, next) => {
+  try { await ensureSetup(); } catch (e) {
+    console.error('Setup failed:', e);
+    return res.status(503).render('error', { title: 'Database not connected', message: setupHint(e) });
+  }
+  next();
+});
 app.use(auth.loadSession);
 app.use(flash);
 

@@ -7,14 +7,14 @@ const router = express.Router();
 
 router.get('/login', (req, res) => {
   if (req.session?.role === 'client') return res.redirect('/');
-  res.render('client/login', { title: 'Client sign in', error: null, username: '' });
+  res.render('client/login', { title: 'Client Portal', error: null, username: '' });
 });
 
 router.post('/login', async (req, res) => {
   const username = clean(req.body.username, 100);
   const password = String(req.body.password || '');
   const key = `client:${req.ip}:${username.toLowerCase()}`;
-  const fail = (status, error) => res.status(status).render('client/login', { title: 'Client sign in', username, error });
+  const fail = (status, error) => res.status(status).render('client/login', { title: 'Client Portal', username, error });
   if (await auth.tooManyAttempts(key)) return fail(429, 'Too many attempts. Try again in 15 minutes.');
   const client = await db.one('SELECT * FROM clients WHERE lower(username) = lower($1)', username);
   if (!client || !(await auth.checkPassword(password, client.password_hash))) {
