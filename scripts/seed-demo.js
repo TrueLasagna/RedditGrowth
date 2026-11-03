@@ -1,5 +1,6 @@
 // Adds two demo clients with posts and drafts so you can try the portal.
 // Usage: npm run seed      (demo client logins: acme / demo-pass-123 and northwind / demo-pass-123)
+// Uses DATABASE_URL if set (your Neon database), otherwise the local test database.
 const { db } = require('../src/db');
 const { hashPassword } = require('../src/auth');
 
@@ -23,19 +24,24 @@ const demo = [
 
 const body = 'Hey everyone,\n\nThis is a sample post body. Your real drafts will show the full text here so clients can read every word before approving.\n\nThanks for reading!';
 
-db.transaction(() => {
+(async () => {
+  await db.ready();
+  const hash = await hashPassword('demo-pass-123');
   for (const d of demo) {
-    if (db.prepare('SELECT 1 FROM clients WHERE username = ?').get(d.user)) { console.log(`Skipping ${d.user} (exists)`); continue; }
-    const id = db.prepare(`INSERT INTO clients (company_name, contact_name, contact_email, username, password_hash, plan_views, price_cents)
-      VALUES (?,?,?,?,?,?,?)`).run(d.company, 'Demo Contact', `hello@${d.user}.example`, d.user, hashPassword('demo-pass-123'), d.plan, d.price).lastInsertRowid;
-    for (const [sub, title, views] of d.posts) {
-      db.prepare('INSERT INTO posts (client_id, subreddit, title, body, views) VALUES (?,?,?,?,?)').run(id, sub, title, body, views);
-    }
-    for (const [sub, title, status] of d.drafts) {
-      db.prepare(`INSERT INTO drafts (client_id, subreddit, title, body, status, decided_at, client_note) VALUES (?,?,?,?,?,?,?)`)
-        .run(id, sub, title, body, status, status === 'pending' ? null : new Date().toISOString().slice(0, 19).replace('T', ' '),
-          status === 'denied' ? 'Too negative for our brand voice — can we make it more positive?' : '');
-    }
+    if (await db.one('SELECT 1 FROM clients WHERE lower(username) = $1', d.user)) { console.log(`Skipping ${d.user} (exists)`); continue; }
+    await db.tx(async (t) => {
+      const { id } = await t.one(`INSERT INTO clients (company_name, contact_name, contact_email, username, password_hash, plan_views, price_cents)
+        VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id`, d.company, 'Demo Contact', `hello@${d.user}.example`, d.user, hash, d.plan, d.price);
+      for (const [sub, title, views] of d.posts) {
+        await t.run('INSERT INTO posts (client_id, subreddit, title, body, views) VALUES ($1,$2,$3,$4,$5)', id, sub, title, body, views);
+      }
+      for (const [sub, title, status] of d.drafts) {
+        await t.run(`INSERT INTO drafts (client_id, subreddit, title, body, status, decided_at, client_note)
+          VALUES ($1,$2,$3,$4,$5,$6,$7)`, id, sub, title, body, status, status === 'pending' ? null : new Date(),
+        status === 'denied' ? 'Too negative for our brand voice — can we make it more positive?' : '');
+      }
+    });
     console.log(`Created ${d.company} → username: ${d.user}  password: demo-pass-123`);
   }
-})();
+  await db.close();
+})().catch((e) => { console.error(e); process.exit(1); });
