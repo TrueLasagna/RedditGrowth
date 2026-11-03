@@ -12,10 +12,42 @@ const { getLogo } = require('./src/uploads');
 
 // Creates the tables and, on the very first run, the admin account from
 // ADMIN_USERNAME / ADMIN_PASSWORD (or a generated password printed once).
+// One-time admin reset: with ADMIN_RESET set in Vercel, the admin login is replaced
+// by ADMIN_USERNAME / ADMIN_PASSWORD. Each username+password pair is applied only
+// once, so later changes made under Admin → Settings are kept.
+async function applyAdminReset() {
+  const { ADMIN_RESET, ADMIN_USERNAME: username, ADMIN_PASSWORD: password } = process.env;
+  if (!ADMIN_RESET || !username || !password) return;
+  if (auth.validatePassword(password) || !/^[a-zA-Z0-9._-]{3,60}$/.test(username)) {
+    console.error('ADMIN_RESET skipped: ADMIN_USERNAME or ADMIN_PASSWORD is not valid.');
+    return;
+  }
+  const marker = crypto.createHash('sha256').update(`${username}\n${password}`).digest('hex');
+  const hash = await auth.hashPassword(password);
+  const applied = await db.tx(async (t) => {
+    await t.one('SELECT pg_advisory_xact_lock(724002)');
+    const done = await t.one("SELECT value FROM app_meta WHERE key = 'admin_reset'");
+    if (done && done.value === marker) return false;
+    const admin = await t.one('SELECT id FROM admins ORDER BY id LIMIT 1');
+    if (admin) {
+      await t.run('DELETE FROM admins WHERE lower(username) = lower($1) AND id <> $2', username, admin.id);
+      await t.run('UPDATE admins SET username = $1, password_hash = $2 WHERE id = $3', username, hash, admin.id);
+      await t.run("DELETE FROM sessions WHERE role = 'admin'");
+    } else {
+      await t.run('INSERT INTO admins (username, password_hash) VALUES ($1, $2)', username, hash);
+    }
+    await t.run(`INSERT INTO app_meta (key, value) VALUES ('admin_reset', $1)
+      ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value`, marker);
+    return true;
+  });
+  if (applied) console.log(`Admin login reset from ADMIN_USERNAME / ADMIN_PASSWORD (username: ${username}).`);
+}
+
 let setup;
 function ensureSetup() {
   return (setup ||= (async () => {
     await db.ready();
+    await applyAdminReset();
     if (await db.one('SELECT 1 FROM admins LIMIT 1')) return;
     const username = process.env.ADMIN_USERNAME || 'admin';
     let password = process.env.ADMIN_PASSWORD;

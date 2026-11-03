@@ -65,6 +65,12 @@ CREATE TABLE IF NOT EXISTS drafts (
 );
 CREATE INDEX IF NOT EXISTS drafts_client ON drafts (client_id);
 
+-- Small key/value store for one-off app settings.
+CREATE TABLE IF NOT EXISTS app_meta (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS sessions (
   token_hash TEXT PRIMARY KEY,
   role TEXT NOT NULL CHECK (role IN ('admin','client')),

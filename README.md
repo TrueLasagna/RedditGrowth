@@ -38,6 +38,8 @@ npm start
 
 Open http://localhost:3000/admin. Without `DATABASE_URL`, it uses a built-in local database in `data/` (good for trying things out; your real data lives in Neon). The admin login is printed in the terminal the first time. `npm run seed` adds two demo clients (logins `acme` and `northwind`, password `demo-pass-123`).
 
+**Reset the admin login from Vercel:** set `ADMIN_USERNAME` and `ADMIN_PASSWORD` to the new login, make sure `ADMIN_RESET` is set (any value), and redeploy. Each new username+password pair is applied once, so changes made later under Admin → Settings are kept.
+
 To work against your Neon database instead, set `DATABASE_URL` first. Forgot the admin password? With `DATABASE_URL` set to your Neon string, run `npm run reset-admin -- yourname 'new-password'`.
 
 ## Where things are

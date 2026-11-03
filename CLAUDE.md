@@ -5,3 +5,4 @@
 - Hosting: Vercel. Database: Neon Postgres via `DATABASE_URL` (set in Vercel). Without `DATABASE_URL`, local runs and tests use PGlite.
 - Admin sign-in is at `/admin`; clients sign in at `/login`.
 - Brand: near-black background, red accent `#FF2A1A`, Outfit font, matching redditgrowth.com. Colour tokens are at the top of `public/static/css/styles.css`.
+- Admin login reset: change `ADMIN_USERNAME`/`ADMIN_PASSWORD` in Vercel (with `ADMIN_RESET` set) and redeploy; applied once per new pair (see `applyAdminReset` in `server.js`).
