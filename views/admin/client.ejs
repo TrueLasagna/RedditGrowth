@@ -179,7 +179,7 @@
             <button class="btn btn-primary btn-sm" type="submit">Upload logo</button>
           </form>
         </div>
-        <% if (c.logo_file) { %>
+        <% if (c.logo_version) { %>
           <form method="post" action="/admin/clients/<%= c.id %>/logo/delete" class="mt">
             <%- include('../partials/csrf') %>
             <button class="btn btn-danger-ghost btn-sm" type="submit" data-confirm="Remove this logo?">Remove logo</button>

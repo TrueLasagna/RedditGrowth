@@ -8,10 +8,10 @@ const formatNumber = (n) => (Number(n) || 0).toLocaleString('en-US');
 const formatMoney = (cents) =>
   '$' + ((Number(cents) || 0) / 100).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-function formatDate(s) {
-  if (!s) return '';
-  const d = new Date(s.replace(' ', 'T') + (s.includes('Z') ? '' : 'Z'));
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+function formatDate(v) {
+  if (!v) return '';
+  const d = v instanceof Date ? v : new Date(v);
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
 const PERIODS = { month: 'month', campaign: 'campaign', one_time: 'one-time' };
